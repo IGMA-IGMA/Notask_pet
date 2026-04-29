@@ -1,0 +1,54 @@
+# Виртуальное окружение
+venv/
+env/
+ENV/
+
+# Логи (все)
+log/
+logs/
+*.log
+*.log.*
+server_log.log
+access.log
+error.log
+debug.log
+
+# Конфиги — игнорировать всё, кроме .example файлов
+config/
+config/*
+!config/*.example
+!config/.*.example
+!config/**/*.example
+
+# Базы данных (если появятся локально)
+*.db
+*.sqlite
+*.sqlite3
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+*.egg
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Секреты и временные файлы
+.env
+*.tmp
+*.bak
+*.pid
+*.key
+*.pem

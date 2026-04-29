@@ -1,36 +1,10 @@
 from contextlib import contextmanager
+from typing import Any
 
 import psycopg2
 
 import hash_pwd
-
-
-class Queries:
-    def __init__(self):
-        self.query_create_tables = """
-            DROP TABLE IF EXISTS users;
-            CREATE TABLE IF NOT EXISTS users(
-            	id SERIAL PRIMARY KEY,
-            	username VARCHAR(255) UNIQUE NOT NULL,
-            	hash_pwd TEXT  NOT NULL,
-            	create_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            );
-            CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
-            CREATE INDEX IF NOT EXISTS idx_users_create_at ON users(create_at);
-        """
-        self.query_create_user = """
-            INSERT INTO users (username, hash_pwd)
-            VALUES (%s, %s)
-        """
-        self.query_read_user = """
-            SELECT username, hash_pwd FROM users WHERE username=%s;
-        """
-        self.query_update_user_username = """
-            UPDATE users SET username=%s WHERE username=%s AND hash_pwd=%s;
-        """
-        self.query_update_user_pwd = """
-            UPDATE users SET username=%s WHERE username=%s AND hash_pwd=%s;
-        """
+from queries import Queries
 
 
 class DB_MANAGER(Queries):
@@ -50,7 +24,7 @@ class DB_MANAGER(Queries):
                 user=self.user,
                 password=self.password,
                 host=self.host,
-                port=self.port
+                port=self.port,
             )
         return self.conn
 
@@ -67,13 +41,36 @@ class DB_MANAGER(Queries):
         finally:
             cursor.close()
 
-    def create_table(self):
+    def create_tables(self):
         with self.get_db_cur() as cursor:
-            cursor.execute(self.query_create_tables)
+            cursor.execute(self.query_create_table_users)
+            cursor.execute(self.query_create_table_notes_users)
+
+    def drop_table_users(self):
+        with self.get_db_cur() as cursor:
+            cursor.execute(self.query_drop_table_notes_users)
 
     def create_user(self, username: str, pwd: str):
         with self.get_db_cur() as cursor:
             cursor.execute(
-                self.query_create_user,
-                (username,
-                 hash_pwd.hash_password(pwd)))
+                self.query_create_user, (username, hash_pwd.hash_password(pwd))
+            )
+
+    def read_user(self, username: str) -> list[tuple[Any, ...]]:
+        with self.get_db_cur() as cursor:
+            cursor.execute(self.query_read_user, username)
+            result = cursor.fetchall()
+        return result
+
+    def update_user_username(self, username, pwd):
+        with self.get_db_cur() as cursor:
+            cursor.execute(
+                self.query_update_user_username,
+                (username, username, hash_pwd.hash_password(pwd)),
+            )
+
+    def delete_user_username(self, username, pwd):
+        with self.get_db_cur() as cursor:
+            cursor.execute(
+                self.query_delete_user, (username, hash_pwd.hash_password(pwd))
+            )
